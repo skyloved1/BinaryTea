@@ -1,3 +1,6 @@
 spring:
   application:
     name: LearnSpring-BinaryTea
+binary-tea:
+  open-hours: 8:00-24:00
+  ready: true
