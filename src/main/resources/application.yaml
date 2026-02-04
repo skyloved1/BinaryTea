@@ -1,15 +1,31 @@
 spring:
   application:
     name: LearnSpring-BinaryTea
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+
+
+
+
 binary-tea:
   open-hours: 8:00-24:00
   ready: false
+
+
+
+
+
 management:
   endpoint:
     health:
       show-details: always
-
   endpoints:
     web:
       exposure:
         include: "*"
+
+
+
+server:
+  shutdown: graceful
