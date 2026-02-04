@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.DistributionSummary
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
+import io.micrometer.core.instrument.logging.LoggingMeterRegistry
 import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicInteger
 
