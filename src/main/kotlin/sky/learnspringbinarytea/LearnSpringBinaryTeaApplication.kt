@@ -1,22 +1,34 @@
 package sky.learnspringbinarytea
 
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.context.ApplicationContext
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
+import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 import sky.learnspringbinarytea.metric.SalesMetrics
+import java.lang.StringBuilder
 import java.time.Duration
 import java.util.concurrent.ScheduledFuture
 import kotlin.random.Random
 
 @SpringBootApplication
 @RestController
-class LearnSpringBinaryTeaApplication {
+open class LearnSpringBinaryTeaApplication(
+    private val ctx: ApplicationContext
+) {
     @GetMapping("/hello")
-    fun hello(): String {
-        return "Hello, Binary Tea!"
+    open fun hello(): String {
+        // 通过 ApplicationContext 获取 Bean（代理对象），确保 AOP 能生效
+        val proxy = ctx.getBean<LearnSpringBinaryTeaApplication>()
+        return "Hello," + proxy.helloWithArgs(StringBuilder("Binary Tea"))
+    }
+
+    open fun helloWithArgs(name: StringBuilder): String {
+        return "$name!"
     }
 }
 
