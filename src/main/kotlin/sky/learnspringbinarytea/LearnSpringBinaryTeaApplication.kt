@@ -1,10 +1,13 @@
 package sky.learnspringbinarytea
 
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.ApplicationContext
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.GetMapping
@@ -35,6 +38,7 @@ open class LearnSpringBinaryTeaApplication(
 @RestController("/scheduled-tasks")
 class ScheduledTasks(
     val salesMetrics: SalesMetrics,
+    val ex:ThreadPoolTaskScheduler
 ) {
 
     companion object {
@@ -43,14 +47,11 @@ class ScheduledTasks(
     }
 
     var task: ScheduledFuture<*>? = null
-    val scheduledExecutor: ThreadPoolTaskScheduler = ThreadPoolTaskScheduler().apply {
-        this.poolSize = 1
-        this.initialize()
-    }
+
 
     @GetMapping("/start")
     fun startTask(): String {
-        task = scheduledExecutor.scheduleAtFixedRate(this::task, Duration.ofSeconds(3))
+        task = ex.scheduleAtFixedRate(this::task, Duration.ofSeconds(3))
         return "Task Started"
     }
     @GetMapping("/stop")
