@@ -31,7 +31,7 @@ class MenuRepositoryTest {
     fun testQueryForItemById(){
         val item=menuRepository.queryForItemById(1)
         assertNotNull(item)
-        assertEquals(1,item?.id)
+        assertEquals(1,item.id)
         assertItem(item, 1L, "Java咖啡", "中杯", BigDecimal.valueOf(10.00));
     }
 
