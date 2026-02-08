@@ -2,6 +2,8 @@ package sky.learnspringbinarytea.repository
 
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.core.queryForObject
 import org.springframework.jdbc.support.GeneratedKeyHolder
 import org.springframework.jdbc.support.KeyHolder
@@ -9,10 +11,12 @@ import org.springframework.stereotype.Repository
 import sky.learnspringbinarytea.model.MenuItem
 import java.math.BigDecimal
 import java.util.*
-import kotlin.text.toLong
 
 @Repository
-class MenuRepository(var jdbcTemplate: JdbcTemplate) {
+class MenuRepository(
+    val jdbcTemplate: JdbcTemplate,
+    val namedParameterJdbcTemplate: NamedParameterJdbcTemplate
+    ) {
 
     fun countMenuItems(): Long {
         val sql = "SELECT COUNT(*) FROM t_menu"
@@ -43,14 +47,16 @@ class MenuRepository(var jdbcTemplate: JdbcTemplate) {
 
 
     val sql = "INSERT INTO t_menu (name, price, size, create_time, update_time) VALUES (?, ?, ?, now(), now())"
-
+    val insertSqlNamed = "INSERT INTO t_menu (name, price, size, create_time, update_time) VALUES (:name, :price, :size, now(), now())"
     fun insertItem(item: MenuItem): Int {
-        return jdbcTemplate.update(
-            sql,
-            item.name,
-            item.price.multiply(BigDecimal.valueOf(100)).toLong(),
-            item.size,
+        val namedParameterSql= MapSqlParameterSource(
+            mapOf(
+                "name" to item.name,
+                "price" to item.price.multiply(BigDecimal.valueOf(100)).toLong(),
+                "size" to item.size
+            )
         )
+        return namedParameterJdbcTemplate.update(insertSqlNamed, namedParameterSql)
     }
 
     /**
