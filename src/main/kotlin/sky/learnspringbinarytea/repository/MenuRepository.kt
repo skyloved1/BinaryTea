@@ -1,5 +1,6 @@
 package sky.learnspringbinarytea.repository
 
+import org.springframework.jdbc.core.BatchPreparedStatementSetter
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
@@ -10,13 +11,14 @@ import org.springframework.jdbc.support.KeyHolder
 import org.springframework.stereotype.Repository
 import sky.learnspringbinarytea.model.MenuItem
 import java.math.BigDecimal
+import java.sql.PreparedStatement
 import java.util.*
 
 @Repository
 class MenuRepository(
     val jdbcTemplate: JdbcTemplate,
     val namedParameterJdbcTemplate: NamedParameterJdbcTemplate
-    ) {
+) {
 
     fun countMenuItems(): Long {
         val sql = "SELECT COUNT(*) FROM t_menu"
@@ -47,9 +49,11 @@ class MenuRepository(
 
 
     val sql = "INSERT INTO t_menu (name, price, size, create_time, update_time) VALUES (?, ?, ?, now(), now())"
-    val insertSqlNamed = "INSERT INTO t_menu (name, price, size, create_time, update_time) VALUES (:name, :price, :size, now(), now())"
+    val insertSqlNamed =
+        "INSERT INTO t_menu (name, price, size, create_time, update_time) VALUES (:name, :price, :size, now(), now())"
+
     fun insertItem(item: MenuItem): Int {
-        val namedParameterSql= MapSqlParameterSource(
+        val namedParameterSql = MapSqlParameterSource(
             mapOf(
                 "name" to item.name,
                 "price" to item.price.multiply(BigDecimal.valueOf(100)).toLong(),
@@ -57,6 +61,22 @@ class MenuRepository(
             )
         )
         return namedParameterJdbcTemplate.update(insertSqlNamed, namedParameterSql)
+    }
+
+    fun intsertItems(items: List<MenuItem>): Int {
+        val countArr = jdbcTemplate.batchUpdate(sql, object : BatchPreparedStatementSetter {
+            override fun setValues(ps: PreparedStatement, i: Int) {
+                val item = items[i]
+                ps.setString(1, item.name)
+                ps.setLong(2, item.price.multiply(BigDecimal.valueOf(100)).toLong())
+                ps.setString(3, item.size)
+            }
+
+            override fun getBatchSize(): Int {
+                return items.size
+            }
+        })
+        return countArr.sum()
     }
 
     /**
@@ -83,5 +103,10 @@ class MenuRepository(
     fun deleteItem(id: Long): Int {
         val sql = "DELETE FROM t_menu WHERE id = ?"
         return jdbcTemplate.update(sql, id)
+    }
+
+    fun deleteItemByName(name: String): Int {
+        val sql = "DELETE FROM t_menu WHERE name = ?"
+        return jdbcTemplate.update(sql, name)
     }
 }

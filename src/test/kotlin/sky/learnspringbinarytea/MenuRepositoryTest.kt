@@ -16,6 +16,7 @@ class MenuRepositoryTest {
 
     @Autowired
     lateinit var menuRepository: MenuRepository
+
     @Autowired
     lateinit var ds: DataSource
 
@@ -74,9 +75,32 @@ class MenuRepositoryTest {
         assertEquals(1, affected2)
         assertNull(menuRepository.queryForItemById(3L))
         assertNull(menuRepository.queryForItemById(4L))
-        //重置自增主键
-        ds.connection.prepareStatement("ALTER TABLE `t_menu` AUTO_INCREMENT = 2;")
-            .executeUpdate()
+        resetAutoIncrement(2)
+    }
+
+    @Test
+    @Order(3)
+    fun testInsertItems() {
+        val items = listOf("Go橙汁2", "Python柠檬茶", "JavaScript奶茶").map {
+            name->
+            MenuItem(
+                name = name,
+                id = null,
+                price = BigDecimal.valueOf(12.0),
+                size = listOf("小杯", "中杯", "大杯").random(),
+                createTime = null,
+                updateTime = null
+            )
+        }
+        val affected = menuRepository.intsertItems(items)
+        assertItem(menuRepository.queryForItemById(3)!!, 3L, "Go橙汁2", items[0].size, BigDecimal.valueOf(12.0))
+        assertItem(menuRepository.queryForItemById(4)!!, 4L, "Python柠檬茶", items[1].size, BigDecimal.valueOf(12.0))
+        assertItem(menuRepository.queryForItemById(5)!!, 5L, "JavaScript奶茶", items[2].size, BigDecimal.valueOf(12.0))
+        assertEquals(3, affected)
+        menuRepository.deleteItem(3)
+        menuRepository.deleteItem(4)
+        menuRepository.deleteItem(5)
+        resetAutoIncrement(to = 2)
     }
 
     private fun assertItem(item: MenuItem, id: Long, name: String, size: String, price: BigDecimal) {
@@ -85,5 +109,10 @@ class MenuRepositoryTest {
         assertEquals(name, item.name)
         assertEquals(price, item.price)
         assertEquals(size, item.size)
+    }
+    fun resetAutoIncrement(to: Int ) {
+        //重置自增主键
+        ds.connection.prepareStatement("ALTER TABLE `t_menu` AUTO_INCREMENT = ${to};")
+            .executeUpdate()
     }
 }
