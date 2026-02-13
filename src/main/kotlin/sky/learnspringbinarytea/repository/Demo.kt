@@ -5,11 +5,13 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 
 @Service
 class DemoService(
     val namedJdbcTemplate: NamedParameterJdbcTemplate,
-    ) {
+    val transactionTemplate: TransactionTemplate
+) {
 
     val INSERT_SQL = """
         insert into t_demo (name,create_time,update_time) values (:name,now(),now())
@@ -40,7 +42,17 @@ class DemoService(
 
     @Transactional(propagation = Propagation.NESTED)
     fun insertRecordNested() {
-         namedJdbcTemplate.update(INSERT_SQL, MapSqlParameterSource(mapOf("name" to "three")))
+        namedJdbcTemplate.update(INSERT_SQL, MapSqlParameterSource(mapOf("name" to "three")))
         throw RuntimeException("Nested transaction failed")
+    }
+    // 使用编程式事务管理
+    fun showNamesProgrammatically() = transactionTemplate.apply {
+
+        this.propagationBehavior = Propagation.REQUIRED.value()
+
+        execute { status ->
+            namedJdbcTemplate.queryForList("select name from t_demo;", MapSqlParameterSource(mapOf("name" to "name")))
+                .joinToString { it["name"].toString() }
+        }
     }
 }
