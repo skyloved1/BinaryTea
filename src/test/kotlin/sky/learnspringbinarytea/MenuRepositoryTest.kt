@@ -1,9 +1,13 @@
 package sky.learnspringbinarytea
 
+import org.joda.money.CurrencyUnit
+import org.joda.money.Money
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import sky.learnspringbinarytea.model.MenuItem
+import org.springframework.transaction.annotation.Transactional
+import sky.learnspringbinarytea.entity.MenuItem
+import sky.learnspringbinarytea.entity.Size
 import sky.learnspringbinarytea.repository.MenuRepository
 import java.math.BigDecimal
 import javax.sql.DataSource
@@ -40,16 +44,17 @@ class MenuRepositoryTest {
         val item = menuRepository.queryForItemById(1)
         assertNotNull(item)
         assertEquals(1, item.id)
-        assertItem(item, 1L, "Java咖啡", "中杯", BigDecimal.valueOf(10.00));
+        assertItem(item, 1L, "Java咖啡", Size.中杯, Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(10.0)));
     }
 
     @Test
+    @Transactional
     @Order(1)
     fun testInsertItem() {
         val item: MenuItem = MenuItem(
             name = "Go橙汁",
-            size = "中杯",
-            price = BigDecimal.valueOf(12.0),
+            size = Size.中杯,
+            price = Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(12.0)),
             id = null,
             createTime = null,
             updateTime = null,
@@ -59,11 +64,25 @@ class MenuRepositoryTest {
         assertNull(item.id)
 
         val queryItem: MenuItem? = menuRepository.queryForItemById(3L)
-        queryItem?.let { assertItem(it, 3L, "Go橙汁", "中杯", BigDecimal.valueOf(12.0)) }
+        queryItem?.let {
+            assertItem(
+                it,
+                3L,
+                "Go橙汁",
+                Size.中杯,
+                Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(12.0))
+            )
+        }
 
         assertEquals(1, menuRepository.insertItemAndFillId(item))
         val itemWithModifiedId = menuRepository.queryForItemById(item.id!!)!!
-        assertItem(itemWithModifiedId, 4L, "Go橙汁", "中杯", BigDecimal.valueOf(12.0))
+        assertItem(
+            itemWithModifiedId,
+            4L,
+            "Go橙汁",
+            Size.中杯,
+            Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(12.0))
+        )
     }
 
     @Test
@@ -80,39 +99,69 @@ class MenuRepositoryTest {
 
     @Test
     @Order(3)
+    @Transactional
     fun testInsertItems() {
-        val items = listOf("Go橙汁2", "Python柠檬茶", "JavaScript奶茶").map {
-            name->
+        val items = listOf("Go橙汁2", "Python柠檬茶", "JavaScript奶茶").map { name ->
             MenuItem(
                 name = name,
                 id = null,
-                price = BigDecimal.valueOf(12.0),
-                size = listOf("小杯", "中杯", "大杯").random(),
+                price = Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(12.0)),
+                size = Size.valueOf(listOf("小杯", "中杯", "大杯").random()),
                 createTime = null,
                 updateTime = null
             )
         }
         val affected = menuRepository.intsertItems(items)
-        assertItem(menuRepository.queryForItemById(3)!!, 3L, "Go橙汁2", items[0].size, BigDecimal.valueOf(12.0))
-        assertItem(menuRepository.queryForItemById(4)!!, 4L, "Python柠檬茶", items[1].size, BigDecimal.valueOf(12.0))
-        assertItem(menuRepository.queryForItemById(5)!!, 5L, "JavaScript奶茶", items[2].size, BigDecimal.valueOf(12.0))
+        assertItem(
+            menuRepository.queryForItemByName("Go橙汁2")!!,
+            3L,
+            "Go橙汁2",
+            Size.valueOf(items[0].size.toString()),
+            Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(12.0))
+        )
+        assertItem(
+            menuRepository.queryForItemByName("Python柠檬茶")!!,
+            4L,
+            "Python柠檬茶",
+            Size.valueOf(items[1].size.toString()),
+            Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(12.0))
+        )
+        assertItem(
+            menuRepository.queryForItemByName("JavaScript奶茶")!!,
+            5L,
+            "JavaScript奶茶",
+            Size.valueOf(items[2].size.toString()),
+            Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(12.0))
+        )
         assertEquals(3, affected)
         menuRepository.deleteItem(3)
         menuRepository.deleteItem(4)
         menuRepository.deleteItem(5)
-        resetAutoIncrement(to = 2)
+       // resetAutoIncrement(to = 2)
     }
 
-    private fun assertItem(item: MenuItem, id: Long, name: String, size: String, price: BigDecimal) {
+    private fun assertItem(item: MenuItem, id: Long, name: String, size: Size, price: Money) {
         assertNotNull(item)
         assertEquals(id, item.id)
         assertEquals(name, item.name)
         assertEquals(price, item.price)
         assertEquals(size, item.size)
     }
-    fun resetAutoIncrement(to: Int ) {
-        //重置自增主键
-        ds.connection.prepareStatement("ALTER TABLE `t_menu` AUTO_INCREMENT = ${to};")
-            .executeUpdate()
+
+    // kotlin
+    fun resetAutoIncrement(to: Int) {
+        try {
+            ds.connection.use { conn ->
+                conn.createStatement().use { stmt ->
+                    val next = stmt.executeQuery("SELECT COALESCE(MAX(id), 0) + 1 FROM `t_menu`").use { rs ->
+                        if (rs.next()) rs.getLong(1) else 1L
+                    }
+                    val newVal = maxOf(to.toLong(), next) // 不会把 AUTO_INCREMENT 设置为比当前最大 id 小的值
+                    stmt.executeUpdate("ALTER TABLE `t_menu` AUTO_INCREMENT = $newVal;")
+                }
+            }
+        } catch (e: Exception) {
+            println(e.message)
+        }
     }
 }

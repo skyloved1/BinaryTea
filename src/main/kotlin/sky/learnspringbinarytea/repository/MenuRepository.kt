@@ -1,5 +1,7 @@
 package sky.learnspringbinarytea.repository
 
+import org.joda.money.CurrencyUnit
+import org.joda.money.Money
 import org.springframework.jdbc.core.BatchPreparedStatementSetter
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
@@ -9,7 +11,8 @@ import org.springframework.jdbc.core.queryForObject
 import org.springframework.jdbc.support.GeneratedKeyHolder
 import org.springframework.jdbc.support.KeyHolder
 import org.springframework.stereotype.Repository
-import sky.learnspringbinarytea.model.MenuItem
+import sky.learnspringbinarytea.entity.MenuItem
+import sky.learnspringbinarytea.entity.Size
 import java.math.BigDecimal
 import java.sql.PreparedStatement
 import java.util.*
@@ -29,6 +32,10 @@ class MenuRepository(
         val sql = "SELECT * FROM t_menu WHERE id = ?"
         return jdbcTemplate.query(sql, rowMapper(), id).firstOrNull()
     }
+    fun queryForItemByName(name: String): MenuItem? {
+        val sql = "SELECT * FROM t_menu WHERE name = ?"
+        return jdbcTemplate.query(sql, rowMapper(), name).firstOrNull()
+    }
 
     fun queryAllItems(): List<MenuItem> {
         return jdbcTemplate.query("select * from t_menu", rowMapper())
@@ -38,11 +45,11 @@ class MenuRepository(
         return RowMapper { rs, rowNum ->
             MenuItem(
                 name = rs.getString("name"),
-                price = BigDecimal.valueOf(rs.getLong("price") / 100.0),
-                size = rs.getString("size"),
+                price = Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(rs.getLong("price") / 100.0)),
+                size = Size.valueOf(rs.getString("size")),
                 id = rs.getLong("id"),
-                createTime = Date(rs.getTimestamp("create_time").time),
-                updateTime = Date(rs.getTimestamp("update_time").time)
+                createTime = rs.getTimestamp("create_time").toLocalDateTime(),
+                updateTime = rs.getTimestamp("update_time").toLocalDateTime()
             )
         }
     }
@@ -56,8 +63,8 @@ class MenuRepository(
         val namedParameterSql = MapSqlParameterSource(
             mapOf(
                 "name" to item.name,
-                "price" to item.price.multiply(BigDecimal.valueOf(100)).toLong(),
-                "size" to item.size
+                "price" to item.price!!.amountMinorLong,
+                "size" to item.size.toString()
             )
         )
         return namedParameterJdbcTemplate.update(insertSqlNamed, namedParameterSql)
@@ -68,8 +75,8 @@ class MenuRepository(
             override fun setValues(ps: PreparedStatement, i: Int) {
                 val item = items[i]
                 ps.setString(1, item.name)
-                ps.setLong(2, item.price.multiply(BigDecimal.valueOf(100)).toLong())
-                ps.setString(3, item.size)
+                item.price?.let { ps.setLong(2, it.amountMinorLong) }
+                ps.setString(3, item.size.toString())
             }
 
             override fun getBatchSize(): Int {
@@ -89,8 +96,8 @@ class MenuRepository(
             { connection ->
                 connection.prepareStatement(sql, arrayOf("id")).apply {
                     setString(1, item.name)
-                    setLong(2, item.price.multiply(BigDecimal.valueOf(100)).toLong())
-                    setString(3, item.size)
+                    setLong(2, item.price!!.amountMinorLong)
+                    setString(3, item.size.toString())
                 }
             }, keyHolder
         )
