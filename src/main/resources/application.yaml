@@ -12,12 +12,16 @@ spring:
       minimum-idle: 10
   sql:
     init:
+  jpa:
+    show-sql: true
+logging:
+  level:
+    sql: debug
 #      schema-locations: init.sql
 
 binary-tea:
   open-hours: 8:00-24:00
   ready: false
-
 
 
 

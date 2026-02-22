@@ -15,7 +15,6 @@ import sky.learnspringbinarytea.entity.MenuItem
 import sky.learnspringbinarytea.entity.Size
 import java.math.BigDecimal
 import java.sql.PreparedStatement
-import java.util.*
 
 @Repository
 class MenuRepository(
