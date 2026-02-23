@@ -26,10 +26,11 @@
     </scm>
 
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
+        <!--actuator提供了对应用程序的监控和管理功能，可以通过HTTP端点暴露应用程序的健康状况、指标、日志等信息，方便开发者进行调试和维护-->
+        <!--     <dependency>
+                 <groupId>org.springframework.boot</groupId>
+                 <artifactId>spring-boot-starter-actuator</artifactId>
+             </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>

@@ -45,16 +45,6 @@ class DataInitRunner(
                 teaMakerRepository.saveAndFlush(teaMaker)
             }
             .also { teaMakers -> teaMakers.forEach { teaMaker -> logger.info("teaMaker:{}", teaMaker) } }
-        /*        val order: Order = Order(
-                    maker = makerList[0],
-                    items = mutableListOf(menuItems[0]),
-                    amount = Amount(
-                        discount = 90,
-                        totalAmount = Money.ofMinor(CurrencyUnit.of("CNY"), 1200),
-                        payAmount = Money.ofMinor(CurrencyUnit.of("CNY"), 1080)
-                    ),
-                    status = OrderStatus.ORDERED
-                )*/
         val orderList: List<Order> = makerList.mapIndexed { index, teaMaker ->
             Order(
                 maker = teaMaker,
