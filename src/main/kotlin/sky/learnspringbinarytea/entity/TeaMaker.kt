@@ -17,14 +17,14 @@ data class TeaMaker(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    var name: String? = null,
+    var name: String? ,
     @OneToMany(mappedBy = "maker")
     var orders:MutableList<Order>?=mutableListOf(),
     @Column(updatable = false)
     @CreationTimestamp
-    var createTime: LocalDateTime?,
+    var createTime: LocalDateTime?=null,
     @UpdateTimestamp
-    var updateTime: LocalDateTime?
+    var updateTime: LocalDateTime?=null
 
 
 ) {

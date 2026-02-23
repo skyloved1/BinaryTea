@@ -1,4 +1,4 @@
-package sky.learnspringbinarytea
+package sky.learnspringbinarytea.repository
 
 import org.joda.money.CurrencyUnit
 import org.joda.money.Money
@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
 import sky.learnspringbinarytea.entity.MenuItem
 import sky.learnspringbinarytea.entity.Size
-import sky.learnspringbinarytea.repository.MenuRepository
 import java.math.BigDecimal
 import javax.sql.DataSource
 import kotlin.test.assertEquals

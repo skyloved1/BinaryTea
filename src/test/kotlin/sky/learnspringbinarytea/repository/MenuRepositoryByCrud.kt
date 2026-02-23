@@ -1,4 +1,4 @@
-package sky.learnspringbinarytea
+package sky.learnspringbinarytea.repository
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,7 +12,6 @@ import org.joda.money.CurrencyUnit
 import org.joda.money.Money
 import sky.learnspringbinarytea.entity.MenuItem
 import sky.learnspringbinarytea.entity.Size
-import sky.learnspringbinarytea.repository.MenuRepositoryByCrud
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest
