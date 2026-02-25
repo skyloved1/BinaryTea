@@ -28,4 +28,6 @@ data class TeaMaker(
 
 
 ) {
+    // Avoid recursive toString caused by bidirectional maker.orders <-> order.maker
+    override fun toString(): String = "TeaMaker(id=$id, name=$name, orders=${orders?.size}, createTime=$createTime, updateTime=$updateTime)"
 }

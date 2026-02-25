@@ -35,5 +35,6 @@ data class Order(
     @CreationTimestamp
     var updateTime: LocalDateTime? = null
 ) {
-
+    // Keep toString compact and non-recursive to prevent StackOverflowError when logging
+    override fun toString(): String = "Order(id=$id, makerId=${maker?.id}, status=$status, items=${items.size}, amount=$amount)"
 }
