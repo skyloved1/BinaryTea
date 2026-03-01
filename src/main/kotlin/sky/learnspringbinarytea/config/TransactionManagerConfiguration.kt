@@ -1,4 +1,4 @@
-package sky.learnspringbinarytea.Config
+package sky.learnspringbinarytea.config
 
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.context.annotation.Bean

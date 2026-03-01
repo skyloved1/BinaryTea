@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
-import sky.learnspringbinarytea.Config.BinaryTeaProperties
+import sky.learnspringbinarytea.config.BinaryTeaProperties
 
 @SpringBootTest
 class LearnSpringBinaryTeaApplicationTests {

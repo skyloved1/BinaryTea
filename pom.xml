@@ -66,6 +66,18 @@
             <artifactId>joda-money</artifactId>
             <version>2.0.3</version>
         </dependency>
+<!--        &lt;!&ndash; Source: https://mvnrepository.com/artifact/org.mybatis/mybatis-spring &ndash;&gt;
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>4.0.0</version>
+            <scope>compile</scope>
+        </dependency>-->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>4.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

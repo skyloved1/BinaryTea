@@ -5,7 +5,6 @@ import jakarta.persistence.Converter
 import org.joda.money.CurrencyUnit
 import org.joda.money.Money
 import java.math.BigDecimal
-import kotlin.Long
 
 @Converter
 class MoneyConverter : AttributeConverter<Money, Long> {

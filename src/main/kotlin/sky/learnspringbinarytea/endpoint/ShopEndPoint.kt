@@ -4,7 +4,7 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation
 import org.springframework.stereotype.Component
-import sky.learnspringbinarytea.Config.BinaryTeaProperties
+import sky.learnspringbinarytea.config.BinaryTeaProperties
 @Component
 @Endpoint(id = "shop")
 class ShopEndPoint(propertiesProvider: ObjectProvider<BinaryTeaProperties>) {
