@@ -13,8 +13,8 @@ import sky.learnspringbinarytea.repository.OrderRepository
 import sky.learnspringbinarytea.repository.TeaMakerRepository
 
 
-@Component
-class DataInitRunner(
+
+open class DataInitRunner(
     val menuRepository: MenuRepositoryByCrud,
     val orderRepository: OrderRepository,
     val teaMakerRepository: TeaMakerRepository,
