@@ -6,17 +6,16 @@ import jakarta.persistence.Embeddable
 import org.joda.money.Money
 
 @Embeddable
-data class Amount(
+class Amount(
     @Column(name = "amount_discount")
-    var discount: Int? ,
+    var discount: Int? = null,
 
     @Column(name = "amount_total")
     @Convert(converter = MoneyConverter::class)
-    var totalAmount: Money? ,
-
+    var totalAmount: Money? = null,
     @Column(name = "amount_pay")
     @Convert(converter = MoneyConverter::class)
-    var payAmount: Money?
+    var payAmount: Money?= null
 ) {
 
 

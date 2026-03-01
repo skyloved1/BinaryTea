@@ -22,11 +22,12 @@ interface OrderMapper {
                 property = "maker",
                 one = One(select = "sky.learnspringbinarytea.mybaits.TeaMakerMapper.findById")
             ),
-            Result(
-                column = "id",
-                property = "items",
-                many = Many(select = "sky.learnspringbinarytea.mybaits.MenuItemMapper.findByOrderId")
-            ),
+//            Result(
+//                column = "id",
+//                property = "items",
+//                many = Many(select = "sky.learnspringbinarytea.mybaits.MenuItemMapper.findByOrderId")
+//            ),
+            Result(column ="id", property = "id", id = true )
         ]
     )
     fun findById(id: Long): Order?
