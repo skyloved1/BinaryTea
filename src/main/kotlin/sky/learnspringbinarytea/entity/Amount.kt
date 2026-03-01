@@ -6,7 +6,7 @@ import jakarta.persistence.Embeddable
 import org.joda.money.Money
 
 @Embeddable
-class Amount(
+data class Amount(
     @Column(name = "amount_discount")
     var discount: Int? = null,
 
