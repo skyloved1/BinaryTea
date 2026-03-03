@@ -1,0 +1,25 @@
+#  PS F:\packages\m2\repository\org\jasypt\jasypt\1.9.3> java -cp ./jasypt-1.9.3.jar org.jasypt.intf.cli.JasyptPBEStringEncryptionCLI input=123456 password=binary-tea algorithm=PBEWITHHMACSHA512ANDAES_256 ivGeneratorClassName=org.jasypt.iv.RandomIvGenerator saltGeneratorClassName=org.jasypt.salt.RandomSaltGenerator
+#
+#    ----ENVIRONMENT-----------------
+#
+#  Runtime: Microsoft OpenJDK 64-Bit Server VM 21.0.10+7-LTS
+#
+#
+#
+#    ----ARGUMENTS-------------------
+#
+#  input: 123456
+#  password: binary-tea
+#  saltGeneratorClassName: org.jasypt.salt.RandomSaltGenerator
+#  ivGeneratorClassName: org.jasypt.iv.RandomIvGenerator
+#  algorithm: PBEWITHHMACSHA512ANDAES_256
+#
+#
+#
+#    ----OUTPUT----------------------
+#
+#    94yuotAW41BF/0xpK13ClENQxGRRMItf7eEWUJ2lLOHheWqQNukwVJOJZ6+n7NfB
+#
+jasypt:
+  encryptor:
+    password: binary-tea
