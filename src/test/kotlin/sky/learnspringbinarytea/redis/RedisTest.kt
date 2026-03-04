@@ -1,12 +1,9 @@
-package sky.learnspringbinarytea
+package sky.learnspringbinarytea.redis
 
-import io.lettuce.core.RedisClient
-import org.springframework.boot.test.context.SpringBootTest
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.data.redis.core.convert.RedisData
 import kotlin.test.assertEquals
 
 @SpringBootTest
