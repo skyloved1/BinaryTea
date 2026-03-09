@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.joda.money.Money
+import java.io.Serializable
 import java.time.LocalDateTime
 
 
@@ -28,8 +29,9 @@ data class MenuItem(
     var createTime: LocalDateTime? = null,// createTime 字段为可空类型，插入前为 null，插入成功后会被填充
     @UpdateTimestamp
     var updateTime: LocalDateTime? = null// updateTime 字段为可空类型，插入前为 null，插入成功后会被填充
-
-
-) {
+) : Serializable {
+    companion object {
+        private  const val serialVersionUID = 8585684450527309518L
+    }
 
 }
