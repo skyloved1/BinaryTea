@@ -32,10 +32,12 @@ class RedisConfiguration {
         }
 
     @Bean
-    fun redisTemplateForJson(connectionFactory: RedisConnectionFactory) = RedisTemplate<String, String>().apply {
+    fun redisTemplateForJson(connectionFactory: RedisConnectionFactory) = RedisTemplate<String, Any>().apply {
         this.connectionFactory = connectionFactory
         this.keySerializer = RedisSerializer.string()
         this.valueSerializer = RedisSerializer.json()
+        this.hashKeySerializer = RedisSerializer.string()
+        this.hashValueSerializer = RedisSerializer.json()
     }
 
 }
