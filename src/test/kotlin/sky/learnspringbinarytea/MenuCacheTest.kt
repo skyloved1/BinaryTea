@@ -4,15 +4,21 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.cache.CacheManager
 import sky.learnspringbinarytea.cache.MenuService
 import sky.learnspringbinarytea.entity.Size
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @SpringBootTest
 class MenuCacheTest {
     @Autowired
     lateinit var menuService: MenuService
-
+    @Autowired lateinit var cacheManager: CacheManager
+    @Test
+    fun cacheManager(){
+        assertTrue { cacheManager is CacheManager }
+    }
 
     @Test
     @Order(1)
