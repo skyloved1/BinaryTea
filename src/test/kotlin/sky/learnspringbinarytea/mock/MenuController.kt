@@ -11,9 +11,11 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.context.WebApplicationContext
 
 @SpringBootTest
@@ -53,5 +55,20 @@ class MenuController {
                 jsonPath("$.id").value(1),
                 jsonPath("$.name").value("Java咖啡")
             )
+    }
+    @Test
+    @Transactional
+    fun `should create new menu item`() {
+
+
+        mock.perform(post("/menu")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("name", "Latte")
+            .param("size", "小杯")
+            .param("price",  "20.99")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.name").value("Latte"))
+            .andExpect(jsonPath("$.price.amount").value(20.99))
     }
 }

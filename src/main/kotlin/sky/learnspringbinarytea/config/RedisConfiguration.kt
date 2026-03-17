@@ -14,10 +14,7 @@ import tools.jackson.databind.ObjectMapper
 @Configuration
 class RedisConfiguration {
 
-    @Bean
-    fun lettuceCustomizer() = LettuceClientConfigurationBuilderCustomizer { configurationBuilder ->
-        configurationBuilder.readFrom(ReadFrom.REPLICA_PREFERRED)
-    }
+
 
     @Bean
     fun redisTemplateForMenuItem(
