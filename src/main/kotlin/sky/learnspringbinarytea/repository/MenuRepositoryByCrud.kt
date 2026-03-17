@@ -9,4 +9,5 @@ import sky.learnspringbinarytea.entity.Size
 @Repository
 interface  MenuRepositoryByCrud : JpaRepository<MenuItem, Long> {
     fun getMenuItemByNameAndSize(name: String, size: Size): MutableList<MenuItem>
+    fun getByName(name: String): MutableList<MenuItem>
 }

@@ -7,18 +7,22 @@ import sky.learnspringbinarytea.entity.MenuItem
 import sky.learnspringbinarytea.entity.Size
 import sky.learnspringbinarytea.repository.MenuRepositoryByCrud
 
-
+@Service
 @CacheConfig(cacheNames = ["menu"])
-open class MenuService(
+class MenuService(
     private val menuRepositoryByCrud: MenuRepositoryByCrud
 ) {
 
 
     @Cacheable
-    open fun getAllMenu(): List<MenuItem> = menuRepositoryByCrud.findAll().toList()
+    fun getAllMenu(): List<MenuItem> = menuRepositoryByCrud.findAll().toList()
 
     @Cacheable(key = "#root.methodName+ '-' + #name + '-' + #size")
-    open fun getByNameAndSize(name: String, size: Size) =
+    fun getByNameAndSize(name: String, size: Size) =
         menuRepositoryByCrud.getMenuItemByNameAndSize(name, size).firstOrNull()
+    @Cacheable(key = "#root.methodName + '-' + #id")
+    fun getById(id: Long) = menuRepositoryByCrud.findById(id).orElse(null)
 
+    @Cacheable(key = "#root.methodName + '-' + #name")
+    fun getByName(name: String) = menuRepositoryByCrud.getByName(name)
 }
