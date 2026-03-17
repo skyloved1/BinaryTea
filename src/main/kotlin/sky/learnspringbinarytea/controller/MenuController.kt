@@ -8,9 +8,11 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Controller
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import sky.learnspringbinarytea.cache.MenuService
 import sky.learnspringbinarytea.entity.MenuItem
 import sky.learnspringbinarytea.entity.NewMenuItemForm
+import util.readFromCSV
 
 @Controller
 @RequestMapping("/menu")
@@ -30,12 +32,37 @@ class MenuController(
     fun getByName(name: String) = menuService.getByName(name)
 
     @PostMapping(consumes = [MediaType.APPLICATION_FORM_URLENCODED_VALUE])
-    fun createByForm(@Valid form: NewMenuItemForm,  result: BindingResult,httpServletResponse: HttpServletResponse): MenuItem? {
+    fun createByForm(
+        @Valid form: NewMenuItemForm,
+        result: BindingResult,
+        httpServletResponse: HttpServletResponse
+    ): MenuItem? {
         if (result.hasErrors()) {
-            logger.warn("Invalid form data: {}", result.fieldErrors)
+            logger.warn(
+                "Invalid form data: {}",
+                result.fieldErrors.joinToString { "${it.field}: ${it.defaultMessage}" })
             httpServletResponse.status = HttpStatus.BAD_REQUEST.value()
             return null;
         }
         return menuService.save(form);
+    }
+
+    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun createByBatched(@RequestParam file: MultipartFile, httpServletResponse: HttpServletResponse): List<MenuItem>? {
+        try {
+            val items = readFromCSV(file).map { form ->
+                MenuItem(
+                    name = form.name,
+                    size = form.size,
+                    price = form.price,
+                )
+            }
+            return menuService.saveAll(items)
+        } catch (e: Exception) {
+            logger.warn("Failed to read from CSV: ${e.message}")
+            httpServletResponse.status = HttpStatus.BAD_REQUEST.value()
+            return null;
+        }
+
     }
 }

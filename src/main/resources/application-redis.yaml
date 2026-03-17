@@ -2,7 +2,7 @@
 spring:
   data:
     redis:
-      host: 172.25.114.160 #wsl redis地址
+      host: localhost   #172.25.114.160 #wsl redis地址
       port: 6379
       timeout: 5000
       connect-timeout: 5000

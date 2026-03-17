@@ -34,4 +34,5 @@ class MenuService(
             size = form.size
         )
     )
+    fun saveAll(items: List<MenuItem>): List<MenuItem> = menuRepositoryByCrud.saveAllAndFlush(items)
 }
