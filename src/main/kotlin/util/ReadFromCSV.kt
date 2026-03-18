@@ -4,7 +4,7 @@ import org.joda.money.CurrencyUnit
 import org.joda.money.Money
 import org.slf4j.LoggerFactory
 import org.springframework.web.multipart.MultipartFile
-import sky.learnspringbinarytea.entity.NewMenuItemForm
+import sky.learnspringbinarytea.entity.view.NewMenuItemForm
 import sky.learnspringbinarytea.entity.Size
 
 fun readFromCSV(file: MultipartFile): List<NewMenuItemForm> {

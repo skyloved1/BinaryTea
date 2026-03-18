@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Embeddable
 import org.joda.money.Money
+import java.io.Serializable
 
 @Embeddable
 data class Amount(
@@ -16,7 +17,7 @@ data class Amount(
     @Column(name = "amount_pay")
     @Convert(converter = MoneyConverter::class)
     var payAmount: Money?= null
-) {
+) : Serializable {
 
 
 }

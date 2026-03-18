@@ -10,9 +10,9 @@ import org.springframework.stereotype.Controller
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import sky.learnspringbinarytea.cache.MenuService
+import sky.learnspringbinarytea.service.MenuService
 import sky.learnspringbinarytea.entity.MenuItem
-import sky.learnspringbinarytea.entity.NewMenuItemForm
+import sky.learnspringbinarytea.entity.view.NewMenuItemForm
 import util.readFromCSV
 
 @Controller

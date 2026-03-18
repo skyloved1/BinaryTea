@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.cache.CacheManager
-import sky.learnspringbinarytea.cache.MenuService
+import sky.learnspringbinarytea.service.MenuService
 import sky.learnspringbinarytea.entity.Size
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

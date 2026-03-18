@@ -39,4 +39,4 @@ management:
 
 server:
   shutdown: graceful
-  port: 7085
+  port: 8080

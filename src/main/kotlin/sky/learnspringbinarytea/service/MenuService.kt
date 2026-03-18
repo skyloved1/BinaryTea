@@ -1,10 +1,10 @@
-package sky.learnspringbinarytea.cache
+package sky.learnspringbinarytea.service
 
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import sky.learnspringbinarytea.entity.MenuItem
-import sky.learnspringbinarytea.entity.NewMenuItemForm
+import sky.learnspringbinarytea.entity.view.NewMenuItemForm
 import sky.learnspringbinarytea.entity.Size
 import sky.learnspringbinarytea.repository.MenuRepositoryByCrud
 

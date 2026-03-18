@@ -9,6 +9,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
+import java.io.Serializable
 import java.time.LocalDateTime
 
 @Entity
@@ -27,7 +28,7 @@ data class TeaMaker(
     var updateTime: LocalDateTime?=null
 
 
-) {
+) : Serializable {
     // Avoid recursive toString caused by bidirectional maker.orders <-> order.maker
     override fun toString(): String = "TeaMaker(id=$id, name=$name, orders=${orders?.size}, createTime=$createTime, updateTime=$updateTime)"
 }

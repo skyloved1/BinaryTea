@@ -2,6 +2,7 @@ package sky.learnspringbinarytea.entity
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
+import java.io.Serializable
 import java.time.LocalDateTime
 
 enum class OrderStatus {
@@ -16,7 +17,7 @@ data class Order(
     var id: Long? = null,
     @ManyToOne
     var maker: TeaMaker?,
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "t_order_item",
         joinColumns = [JoinColumn(name = "order_id")],
@@ -34,7 +35,7 @@ data class Order(
     var createTime: LocalDateTime? = null,
     @CreationTimestamp
     var updateTime: LocalDateTime? = null
-) {
+) : Serializable {
     // Keep toString compact and non-recursive to prevent StackOverflowError when logging
     override fun toString(): String = "Order(id=$id, makerId=${maker?.id}, status=$status, items=${items.size}, amount=$amount)"
 }
