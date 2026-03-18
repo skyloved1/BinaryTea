@@ -1,0 +1,7 @@
+spring:
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 7200
+          cache-public: true
