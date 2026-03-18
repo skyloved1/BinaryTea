@@ -10,23 +10,18 @@ import sky.learnspringbinarytea.entity.Size
 fun readFromCSV(file: MultipartFile): List<NewMenuItemForm> {
     val logger = LoggerFactory.getLogger("ReadFromCSV")
     val inputStream = file.inputStream
-    val items = mutableListOf<NewMenuItemForm>()
-    inputStream.bufferedReader(Charsets.UTF_8).useLines { sequence ->
-        sequence.forEachIndexed { index, string ->
-            println("$index: $string")
+    return inputStream.bufferedReader(Charsets.UTF_8).useLines { sequence ->
+        sequence.map { string ->
             val params = string.split(" ")
-            if (params.size !in 3..3) {
+            if (params.size != 3) {
                 logger.warn("Wrong number of params for $string")
                 throw IllegalArgumentException("Wrong number of params for $string")
             }
-            items.add(
-                NewMenuItemForm(
-                    name = params[0],
-                    price = Money.of(CurrencyUnit.of("CNY"), params[2].toBigDecimal()),
-                    size = Size.valueOf(params[1])
-                )
+            NewMenuItemForm(
+                name = params[0],
+                price = Money.of(CurrencyUnit.of("CNY"), params[2].toBigDecimal()),
+                size = Size.valueOf(params[1])
             )
-        }
+        }.toList()
     }
-    return items;
 }

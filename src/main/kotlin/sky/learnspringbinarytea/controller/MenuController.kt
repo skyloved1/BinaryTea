@@ -5,6 +5,7 @@ import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
@@ -48,7 +49,10 @@ class MenuController(
     }
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun createByBatched(@RequestParam file: MultipartFile, httpServletResponse: HttpServletResponse): List<MenuItem>? {
+    fun createByBatched(
+        @RequestParam file: MultipartFile,
+        httpServletResponse: HttpServletResponse
+    ): ResponseEntity<List<MenuItem>> {
         try {
             val items = readFromCSV(file).map { form ->
                 MenuItem(
@@ -57,11 +61,10 @@ class MenuController(
                     price = form.price,
                 )
             }
-            return menuService.saveAll(items)
-        } catch (e: Exception) {
-            logger.warn("Failed to read from CSV: ${e.message}")
+            return ResponseEntity.ok(menuService.saveAll(items))
+        } catch (e: IllegalArgumentException) {
             httpServletResponse.status = HttpStatus.BAD_REQUEST.value()
-            return null;
+            throw e
         }
 
     }
