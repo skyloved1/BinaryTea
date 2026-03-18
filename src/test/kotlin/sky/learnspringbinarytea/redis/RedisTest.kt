@@ -23,9 +23,9 @@ class RedisTest {
     @Test
     fun contextLoads() {
         redisTemplate.opsForValue().set("test", 5)
-        val value = redisTemplate.opsForValue().get("test")
+        val value = redisTemplate.opsForValue().getAndDelete("test")
         println("Value from Redis: $value")
-        assertEquals(5, value)
+        assertEquals(5, value as Int)
     }
 
     @Test
