@@ -14,6 +14,10 @@ spring:
     show-sql: false
     hibernate:
       ddl-auto: update
+  devtools:
+    remote:
+      restart:
+        enabled: false
 logging:
   level:
     sql: debug
@@ -22,7 +26,6 @@ logging:
 binary-tea:
   open-hours: 8:00-24:00
   ready: false
-
 
 
 
