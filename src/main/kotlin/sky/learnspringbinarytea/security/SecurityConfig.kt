@@ -32,6 +32,10 @@ class SecurityConfig {
                 it.defaultSuccessUrl("/order")
                 it.failureUrl("/login")
             })
+            .rememberMe({
+                it.key("binarytea-remember-me") // 设置一个密钥，用于签名 cookie
+                it.tokenValiditySeconds(86400) // 记住我有效期 1 天 (86400秒)
+            })
             .httpBasic(withDefaults())
         return http.build()
     }
