@@ -3,6 +3,7 @@ package sky.learnspringbinarytea.service
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
+import org.springframework.web.bind.annotation.RequestParam
 import sky.learnspringbinarytea.entity.MenuItem
 import sky.learnspringbinarytea.entity.view.NewMenuItemForm
 import sky.learnspringbinarytea.entity.Size
@@ -15,8 +16,10 @@ class MenuService(
 ) {
 
 
-    @Cacheable
-    fun getAllMenu(): List<MenuItem> = menuRepositoryByCrud.findAll().toList()
+    @Cacheable(key = "#root.methodName", condition = "#enableCache")
+    fun getAllMenu(enableCache: Boolean = true): List<MenuItem> {
+        return menuRepositoryByCrud.findAll()
+    }
 
     @Cacheable(key = "#root.methodName+ '-' + #name + '-' + #size")
     fun getByNameAndSize(name: String, size: Size) =

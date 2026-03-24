@@ -24,7 +24,7 @@ class MenuController(
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
     @GetMapping(params = ["!name"])
-    fun getAll() = menuService.getAllMenu()
+    fun getAll(@RequestParam(defaultValue = "true") enableCache: Boolean) = menuService.getAllMenu(enableCache)
 
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getById(@PathVariable id: Long): MenuItem? = menuService.getById(id)

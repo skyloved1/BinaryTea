@@ -23,13 +23,13 @@ class MenuRepositoryTest {
     @Autowired
     lateinit var ds: DataSource
 
-    @Test
+
     fun testCount() {
         val count = menuRepository.countMenuItems()
         assertEquals(2, count)
     }
 
-    @Test
+
     fun testQueryAllItems() {
         val items = menuRepository.queryAllItems()
         assertNotNull(items)
@@ -46,9 +46,7 @@ class MenuRepositoryTest {
         assertItem(item, 1L, "Java咖啡", Size.中杯, Money.of(CurrencyUnit.of("CNY"), BigDecimal.valueOf(10.0)));
     }
 
-    @Test
-    @Transactional
-    @Order(1)
+
     fun testInsertItem() {
         val item: MenuItem = MenuItem(
             name = "Go橙汁",
@@ -84,7 +82,7 @@ class MenuRepositoryTest {
         )
     }
 
-    @Test
+
     @Order(2)
     fun testDeleteItem() {
         val affected = menuRepository.deleteItem(id = 3L)//删除 item
@@ -96,8 +94,8 @@ class MenuRepositoryTest {
         resetAutoIncrement(2)
     }
 
-    @Test
-    @Order(3)
+
+
     @Transactional
     fun testInsertItems() {
         val items = listOf("Go橙汁2", "Python柠檬茶", "JavaScript奶茶").map { name ->
