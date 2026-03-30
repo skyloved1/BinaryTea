@@ -1,6 +1,6 @@
 spring:
   profiles:
-    include: jasypt, database,redis,security
+    include: jasypt, database,redis,security,cache
   application:
     name: LearnSpring-BinaryTea
   lifecycle:

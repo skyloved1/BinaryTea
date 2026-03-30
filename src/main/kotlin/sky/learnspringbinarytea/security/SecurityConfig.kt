@@ -4,7 +4,6 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.dao.DuplicateKeyException
-import org.springframework.scheduling.TaskScheduler
 import org.springframework.security.config.Customizer.withDefaults
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -28,8 +27,7 @@ class SecurityConfig {
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        objectMapper: ObjectMapper,
-        taskScheduler: TaskScheduler
+        objectMapper: ObjectMapper
     ): SecurityFilterChain {
         http
             .authorizeHttpRequests {
@@ -61,6 +59,7 @@ class SecurityConfig {
                 it.logoutUrl("/logout")
                 it.logoutSuccessUrl("/login")
                 it.invalidateHttpSession(true)
+                it.deleteCookies("JSESSIONID", "remember-me") // 删除 session 和 remember-me cookie
                 it.logoutRequestMatcher { request ->
                     (request.method == "POST" || request.method == "GET") && request.requestURI == "/logout"
                 }
