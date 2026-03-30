@@ -1,4 +1,4 @@
-package sky.learnspringbinarytea.mock
+package sky.learnspringbinarytea.controllertest
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
