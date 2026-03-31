@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.assertNotNull
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.logout
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic
@@ -16,9 +18,8 @@ import org.springframework.security.test.web.servlet.response.SecurityMockMvcRes
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
@@ -29,6 +30,9 @@ import kotlin.test.assertTrue
 
 @SpringBootTest
 class OrderControllerTest {
+
+    var jdbcClient: JdbcClient? = null
+
     var mockMvc: MockMvc? = null
 
     @Autowired
@@ -37,12 +41,14 @@ class OrderControllerTest {
     @BeforeEach
     fun contextLoads(wac: WebApplicationContext) {
         mockMvc = MockMvcBuilders.webAppContextSetup(wac).apply<DefaultMockMvcBuilder>(springSecurity()).build()
+        jdbcClient = JdbcClient.create(wac.getBean<javax.sql.DataSource>())
     }
 
 
     @AfterEach
     fun teardown() {
         mockMvc = null
+        jdbcClient = null
     }
 
     @Test
@@ -71,10 +77,9 @@ class OrderControllerTest {
     @Order(3)
     fun testLogout() {
         runCatching {
-            mockMvc!!.perform {
-                logout().buildRequest(it)
-            }
+            mockMvc!!.perform(logout())
                 .andExpectAll(
+                    status().is3xxRedirection,
                     unauthenticated(),
                     redirectedUrl("/login")
                 )
@@ -138,12 +143,48 @@ class OrderControllerTest {
                 status().is2xxSuccessful
             )
     }
+
     @Test
     fun testOrderPageWithUnauthorizedAccess() {
         mockMvc!!.perform(get("/order").header("Accept", "text/html"))//模拟浏览器
-        .andExpectAll(
-            status().is3xxRedirection, //浏览器是否跳转到401
-            redirectedUrlPattern("/**/login")
-        )
+            .andExpectAll(
+                status().is3xxRedirection, //浏览器是否跳转到401
+                redirectedUrlPattern("/**/login")
+            )
     }
+
+    @Test
+    fun testOrderPageWithPersistentToken() {
+        mockMvc!!.perform(
+            post("/login")
+                .param("username", "lilei")
+                .param("password", "binarytea")
+                .param("remember-me", "1")
+        ).andExpectAll(
+            status().is3xxRedirection,
+            redirectedUrl("/order"),
+            authenticated()
+        ).andDo {
+            assertNotNull(it.response.getCookie("remember-me"), "remember-me cookie should be present")
+        }
+
+        val count = jdbcClient!!.sql("select count(*) from persistent_logins where username = :username")
+            .param("username", "lilei")
+            .query(Int::class.java)
+            .single()
+        assertTrue(count > 0, "persistent_logins should contain token row for lilei")
+
+        mockMvc!!.perform(logout())
+            .andExpectAll(
+                status().is3xxRedirection,
+                redirectedUrl("/login"),
+                unauthenticated()
+            ).andDo {
+                assertTrue(
+                    it.response.getCookie("remember-me")?.maxAge == 0 || it.response.getHeader("Expires") == "Thu, 01 Jan 1970",
+                    "remember-me cookie should be deleted"
+                )
+            }
+    }
+
 }

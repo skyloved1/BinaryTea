@@ -1,6 +1,7 @@
 package sky.learnspringbinarytea.security
 
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.dao.DuplicateKeyException
@@ -13,13 +14,29 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.JdbcUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl
 import tools.jackson.databind.ObjectMapper
 import javax.sql.DataSource
+
+@Configuration
+class SecurityConfig2 {
+
+    @Suppress("removal")
+    @Bean
+    fun persistentTokenRepository(dataSource: DataSource) = JdbcTokenRepositoryImpl().apply {
+        setCreateTableOnStartup(false)
+        setDataSource(dataSource)
+    }
+}
+
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
     val logger = org.slf4j.LoggerFactory.getLogger(this::class.java)
+
+    @Autowired
+    lateinit var persistentTokenRepository: JdbcTokenRepositoryImpl
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
@@ -54,6 +71,7 @@ class SecurityConfig {
             .rememberMe({
                 it.key("binarytea-remember-me") // 设置一个密钥，用于签名 cookie
                 it.tokenValiditySeconds(86400) // 记住我有效期 1 天 (86400秒)
+                it.tokenRepository(persistentTokenRepository)
             })
             .logout {
                 it.logoutUrl("/logout")
