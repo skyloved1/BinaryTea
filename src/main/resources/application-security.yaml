@@ -3,3 +3,10 @@ spring:
     user:
       name: binarytea
       password: showmethemoney
+
+
+
+
+
+jwt:
+    secret: wbX4s6lkkViKchPcFW1bSUpw9JcXzqkjOK6AW2VHkPKgh3wmNGMCUZDSbYAozw45G/nyifOieZGJNvMLqJacUw==
