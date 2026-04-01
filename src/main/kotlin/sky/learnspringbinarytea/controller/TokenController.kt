@@ -36,8 +36,10 @@ class TokenController(
             return ResponseEntity.badRequest().body(TokenResponse(message = errorMessages))
         }
         runCatching {
+            //用户名密码登录认证
+            //UsernamePasswordAuthenticationToken(...)：封装登录表单里的用户名和密码
             UsernamePasswordAuthenticationToken(tokenRequest.username, tokenRequest.password).let {
-                authenticationManager.authenticate(it)
+                authenticationManager.authenticate(it)  // 交给 Spring Security 校验账号密码是否正确
             }
         }.onFailure {
             when (it) {
@@ -51,6 +53,7 @@ class TokenController(
                     .body(TokenResponse(message = "Unknown error"))
             }
         }.onSuccess {
+            //如果验证用户名密码成功，生成Token
             return ResponseEntity.ok(TokenResponse(generateToken(tokenRequest.username), message = null))
         }
 
