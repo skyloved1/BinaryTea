@@ -14,6 +14,12 @@ class JwtAuthenticationFilter(
         val token = header.substringAfter("Bearer ").trim()
         val jws = jwtTokenHelper.parseToken(token)
         jws
+            //具体是：
+            // getPreAuthenticatedPrincipal() 返回 subject
+            //AbstractPreAuthenticatedProcessingFilter 拿到它，组装预认证 token
+            //交给 PreAuthenticatedAuthenticationProvider
+            //provider 再用 UserDetailsService 加载用户权限
+            //最终放入 SecurityContext
             .onSuccess { return it.payload.subject }
             .onFailure {
                 logger.warn("Invalid JWT token: ${it.message}")
