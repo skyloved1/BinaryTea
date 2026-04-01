@@ -90,6 +90,7 @@ class SecurityConfig(
             }
             .authorizeHttpRequests {
                 it.requestMatchers("/menu").permitAll()
+                it.requestMatchers("/token").permitAll()
                 it.anyRequest().authenticated()
             }
             .formLogin({
