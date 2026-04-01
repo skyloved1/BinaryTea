@@ -1,27 +1,47 @@
 package sky.learnspringbinarytea.security
 
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.Customizer.withDefaults
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.userdetails.User
+import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.JdbcUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.HttpStatusEntryPoint
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
+import sky.learnspringbinarytea.jwt.JwtAuthenticationFilter
+import sky.learnspringbinarytea.jwt.JwtTokenHelper
 import tools.jackson.databind.ObjectMapper
 import javax.sql.DataSource
 
+
 @Configuration
-class SecurityConfig2 {
+class SecurityConfigForBean {
+
+
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+
+
+    @Bean("authenticationManager")
+    fun authenticationManager(config: AuthenticationConfiguration): AuthenticationManager =
+        config.authenticationManager
 
     @Suppress("removal")
     @Bean
@@ -34,21 +54,40 @@ class SecurityConfig2 {
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
-    val logger = org.slf4j.LoggerFactory.getLogger(this::class.java)
+class SecurityConfig(
+    val persistentTokenRepository: JdbcTokenRepositoryImpl,
+) {
+    val logger = LoggerFactory.getLogger(this::class.java)
 
-    @Autowired
-    lateinit var persistentTokenRepository: JdbcTokenRepositoryImpl
-
-    @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        objectMapper: ObjectMapper
+        objectMapper: ObjectMapper, jwtTokenHelper: JwtTokenHelper, authenticationManager: AuthenticationManager
     ): SecurityFilterChain {
         http
+            //ddFilterAt(...)
+            //把你的 jwtAuthenticationFilter 放到 AbstractPreAuthenticatedProcessingFilter
+            // 这个位置上。意思是：用你自定义 JWT 逻辑替换/占据该过滤器槽位，在认证链中按这个阶段执行。
+            .addFilterAt(
+                jwtAuthenticationFilter(jwtTokenHelper, authenticationManager = authenticationManager),
+                AbstractPreAuthenticatedProcessingFilter::class.java
+            )
+            //配置“未认证时怎么响应”，并按请求类型分流：
+            .exceptionHandling { handlingConfigurer ->
+                //TEXT_HTML：走 LoginUrlAuthenticationEntryPoint("/login")，浏览器请求会重定向到 /login
+                handlingConfigurer
+                    //TEXT_HTML：走 LoginUrlAuthenticationEntryPoint("/login")，浏览器请求会重定向到 /login
+                    .defaultAuthenticationEntryPointFor(
+                        LoginUrlAuthenticationEntryPoint("/login"),
+                        MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                    )
+                    // APPLICATION_JSON：走 HttpStatusEntryPoint(401)，API 请求直接返回 401 Unauthorized
+                    .defaultAuthenticationEntryPointFor(
+                        HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                        MediaTypeRequestMatcher(MediaType.APPLICATION_JSON)
+                    )
+            }
             .authorizeHttpRequests {
                 it.requestMatchers("/menu").permitAll()
                 it.anyRequest().authenticated()
@@ -85,6 +124,7 @@ class SecurityConfig {
                 }
             }
             .csrf { it.disable() }
+            .anonymous(withDefaults())
             .httpBasic(withDefaults())
         return http.build()
     }
@@ -107,7 +147,7 @@ class SecurityConfig {
         passwordEncoderProvider: ObjectProvider<PasswordEncoder>,
         dataSource: DataSource
     ): UserDetailsService {
-        val passwordEncoder = passwordEncoderProvider.getIfAvailable { passwordEncoder() }
+        val passwordEncoder = passwordEncoderProvider.getIfAvailable { SecurityConfigForBean().passwordEncoder() }
         val jdbcUserDetailsManager = JdbcUserDetailsManager(dataSource)
         val employee = User.builder()
             .username("lilei")
@@ -128,6 +168,21 @@ class SecurityConfig {
         }
         return jdbcUserDetailsManager
     }
+
     @Bean
-    fun authenticationManager(config: AuthenticationConfiguration)=config.authenticationManager
+    fun jwtAuthenticationFilter(
+        jwtTokenHelper: JwtTokenHelper,
+        authenticationManager: AuthenticationManager
+    ): JwtAuthenticationFilter {
+        val filter = JwtAuthenticationFilter(
+            jwtTokenHelper = jwtTokenHelper
+        ).apply { setAuthenticationManager(authenticationManager) }
+        return filter
+    }
+
+    @Bean
+    fun jwtPreAuthenticateAuthenticationProvider(userDetailsService: UserDetailsService) =
+        PreAuthenticatedAuthenticationProvider().apply {
+            setPreAuthenticatedUserDetailsService(UserDetailsByNameServiceWrapper(userDetailsService))
+        }
 }

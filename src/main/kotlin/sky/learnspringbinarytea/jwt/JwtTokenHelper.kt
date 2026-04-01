@@ -33,6 +33,7 @@ class JwtTokenHelper : InitializingBean {
 
     @Value($$"${jwt.secret}")
     fun setBase64Key(base64Key: String) {
+        logger.info("Use Base64Key: $base64Key")
         //  key = Keys.builder(SecretKeySpec(Decoders.BASE64.decode(base64Key), Jwts.SIG.HS512.id)).build()
         key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Key))
     }
