@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -38,7 +39,21 @@ class SecurityConfigForBean {
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
+    ///它的职责不是校验密码，而是：
+    //过滤器先从 JWT 里解析出“已认证的用户名（principal）”
+    //PreAuthenticatedAuthenticationProvider 接收这个 principal
+    //再通过 UserDetailsByNameServiceWrapper(userDetailsService) 按用户名加载用户权限（roles/authorities）
+    //生成最终 Authentication 放进 SecurityContext
+    @Bean
+    fun jwtPreAuthenticatedAuthenticationProvider(userDetailsService: UserDetailsService): PreAuthenticatedAuthenticationProvider {
+        val provider = PreAuthenticatedAuthenticationProvider()
+        provider.setPreAuthenticatedUserDetailsService(
+            UserDetailsByNameServiceWrapper(userDetailsService)
+        )
+        return provider
+    }
 
+    @Primary
     @Bean("authenticationManager")
     fun authenticationManager(config: AuthenticationConfiguration): AuthenticationManager =
         config.authenticationManager
@@ -63,9 +78,11 @@ class SecurityConfig(
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        objectMapper: ObjectMapper, jwtTokenHelper: JwtTokenHelper, authenticationManager: AuthenticationManager
+        objectMapper: ObjectMapper, jwtTokenHelper: JwtTokenHelper, authenticationManager: AuthenticationManager,
+        jwtPreAuthenticatedAuthenticationProvider: PreAuthenticatedAuthenticationProvider
     ): SecurityFilterChain {
         http
+            .authenticationProvider(jwtPreAuthenticatedAuthenticationProvider)
             //ddFilterAt(...)
             //把你的 jwtAuthenticationFilter 放到 AbstractPreAuthenticatedProcessingFilter
             // 这个位置上。意思是：用你自定义 JWT 逻辑替换/占据该过滤器槽位，在认证链中按这个阶段执行。
