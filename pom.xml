@@ -199,6 +199,7 @@
                     <args>
                         <arg>-Xjsr305=strict</arg>
                         <arg>-Xannotation-default-target=param-property</arg>
+                        <arg>-Xcontext-parameters</arg>
                     </args>
                     <compilerPlugins>
                         <plugin>spring</plugin>

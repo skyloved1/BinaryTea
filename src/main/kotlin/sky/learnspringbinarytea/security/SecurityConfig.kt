@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.AuthenticationManager
@@ -15,8 +16,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.userdetails.User
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper
-import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.JdbcUserDetailsManager
@@ -45,7 +46,7 @@ class SecurityConfigForBean {
     //再通过 UserDetailsByNameServiceWrapper(userDetailsService) 按用户名加载用户权限（roles/authorities）
     //生成最终 Authentication 放进 SecurityContext
     @Bean
-    fun jwtPreAuthenticatedAuthenticationProvider(userDetailsService: UserDetailsService): PreAuthenticatedAuthenticationProvider {
+    fun jwtPreAuthenticatedAuthenticationProvider(userDetailsService: RoleBasedJdbcUserDetailsManager): PreAuthenticatedAuthenticationProvider {
         val provider = PreAuthenticatedAuthenticationProvider()
 
         //provider 用 payload.subject 查 UserDetails，组装 Authentication 放入 SecurityContext
@@ -58,7 +59,7 @@ class SecurityConfigForBean {
 
     @Bean
     fun daoAuthenticationProvider(
-        userDetailsService: UserDetailsService,
+        userDetailsService: RoleBasedJdbcUserDetailsManager,
         passwordEncoder: PasswordEncoder
     ) = DaoAuthenticationProvider(userDetailsService).apply {
         setPasswordEncoder(passwordEncoder)
@@ -117,9 +118,28 @@ class SecurityConfig(
                     )
             }
             .authorizeHttpRequests {
-                it.requestMatchers("/menu").permitAll()
-                it.requestMatchers("/token").permitAll()
-                it.anyRequest().authenticated()
+                with(it) {
+                    requestMatchers("/").permitAll()
+                    requestMatchers("/actuator/*").permitAll()
+
+                    requestMatchers(HttpMethod.GET, "/menu", "/menu/**").apply {
+                        hasAuthority(UserAuthorities.READ_MENU.name)
+                        hasAnyRole("ANONYMOUS", "USER", "MANAGER", "TEA_MAKER")
+                    }
+                    requestMatchers(HttpMethod.POST, "/menu").apply {
+                        hasAuthority(UserAuthorities.WRITE_MENU.name)
+                        hasRole("MANAGER")
+                    }
+                    requestMatchers(HttpMethod.GET, "/order").apply {
+                        hasAuthority(UserAuthorities.READ_ORDER.name)
+                        hasAnyRole("USER", "TEA_MAKER", "MANAGER")
+                    }
+                    requestMatchers(HttpMethod.POST, "/order").apply {
+                        hasAuthority(UserAuthorities.WRITE_ORDER.name)
+                        hasAnyRole("TEA_MAKER", "MANAGER")
+                    }
+                    anyRequest().authenticated()
+                }
             }
             .formLogin({
                 it.defaultSuccessUrl("/order")
@@ -152,15 +172,20 @@ class SecurityConfig(
                     (request.method == "POST" || request.method == "GET") && request.requestURI == "/logout"
                 }
             }
+            .anonymous({
+                it
+                    .key("binarytea-anonymous")
+                    .authorities("READ_MENU")
+
+            })
             .csrf { it.disable() }
-            .anonymous(withDefaults())
             .httpBasic(withDefaults())
         return http.build()
     }
 
     // 这里的密码编码器是为了演示而设置的，实际项目中应该使用更安全的密码存储方式
     /* @Bean
-     fun userDetailsService(passwordEncoderProvider: ObjectProvider<PasswordEncoder>): UserDetailsService {
+     fun userDetailsService(passwordEncoderProvider: ObjectProvider<PasswordEncoder>): RoleBasedJdbcUserDetailsManager {
          val passwordEncoder = passwordEncoderProvider.getIfAvailable { passwordEncoder() }
          val employee = User.builder()
              .username("lilei")
@@ -171,21 +196,10 @@ class SecurityConfig(
          return InMemoryUserDetailsManager(employee)
      }
  */
-    @Bean
-    fun jdbcUserDetailsService(
-        passwordEncoderProvider: ObjectProvider<PasswordEncoder>,
-        dataSource: DataSource
-    ): UserDetailsService {
-        val passwordEncoder = passwordEncoderProvider.getIfAvailable { SecurityConfigForBean().passwordEncoder() }
-        val jdbcUserDetailsManager = JdbcUserDetailsManager(dataSource)
-        val employee = User.builder()
-            .username("lilei")
-            .password("binarytea")
-            .passwordEncoder(passwordEncoder::encode)
-            .roles("EMPLOYEE")
-            .build()
+    context(jdbcUserDetailsManager: JdbcUserDetailsManager)
+    fun createUser(user: UserDetails) {
         runCatching {
-            jdbcUserDetailsManager.createUser(employee)
+            jdbcUserDetailsManager.createUser(user)
         }.onFailure {
             // 如果用户已存在，可以忽略异常或打印日志
             if (it is DuplicateKeyException)
@@ -194,6 +208,33 @@ class SecurityConfig(
                 logger.error("Error creating user 'lilei': ${it.message}")
                 throw it
             }
+        }
+    }
+
+    @Bean
+    fun jdbcUserDetailsService(
+        passwordEncoderProvider: ObjectProvider<PasswordEncoder>,
+        dataSource: DataSource
+    ): RoleBasedJdbcUserDetailsManager {
+        val passwordEncoder = passwordEncoderProvider.getIfAvailable { SecurityConfigForBean().passwordEncoder() }
+        val jdbcUserDetailsManager = RoleBasedJdbcUserDetailsManager(dataSource)
+        val employee = User.builder().apply {
+            username("lilei")
+            password("binarytea")
+            passwordEncoder(passwordEncoder::encode)
+            roles("EMPLOYEE")
+            authorities(UserAuthorities.READ_MENU.name, UserAuthorities.READ_ORDER.name)
+        }.build()
+        val manager = User.builder().apply {
+            username("HanMeimei")
+            password("binarytea")
+            roles("MANAGER")
+            passwordEncoder(passwordEncoder::encode)
+            authorities(*UserAuthorities.entries.map { it.name }.toTypedArray())
+        }.build()
+        context(jdbcUserDetailsManager) {
+            createUser(employee)
+            createUser(manager)
         }
         return jdbcUserDetailsManager
     }
