@@ -9,6 +9,7 @@ import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer.withDefaults
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -35,7 +36,6 @@ import javax.sql.DataSource
 @Configuration
 class SecurityConfigForBean {
 
-
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
@@ -47,10 +47,21 @@ class SecurityConfigForBean {
     @Bean
     fun jwtPreAuthenticatedAuthenticationProvider(userDetailsService: UserDetailsService): PreAuthenticatedAuthenticationProvider {
         val provider = PreAuthenticatedAuthenticationProvider()
+
+        //provider 用 payload.subject 查 UserDetails，组装 Authentication 放入 SecurityContext
         provider.setPreAuthenticatedUserDetailsService(
             UserDetailsByNameServiceWrapper(userDetailsService)
         )
         return provider
+    }
+
+
+    @Bean
+    fun daoAuthenticationProvider(
+        userDetailsService: UserDetailsService,
+        passwordEncoder: PasswordEncoder
+    ) = DaoAuthenticationProvider(userDetailsService).apply {
+        setPasswordEncoder(passwordEncoder)
     }
 
     @Primary
@@ -197,10 +208,4 @@ class SecurityConfig(
         ).apply { setAuthenticationManager(authenticationManager) }
         return filter
     }
-
-    @Bean
-    fun jwtPreAuthenticateAuthenticationProvider(userDetailsService: UserDetailsService) =
-        PreAuthenticatedAuthenticationProvider().apply {
-            setPreAuthenticatedUserDetailsService(UserDetailsByNameServiceWrapper(userDetailsService))
-        }
 }

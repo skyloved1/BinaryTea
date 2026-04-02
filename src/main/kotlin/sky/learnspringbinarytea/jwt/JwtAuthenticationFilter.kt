@@ -9,7 +9,7 @@ class JwtAuthenticationFilter(
 ) : AbstractPreAuthenticatedProcessingFilter() {
     override fun getPreAuthenticatedPrincipal(request: HttpServletRequest): Any? {
         val header = request.getHeader(HttpHeaders.AUTHORIZATION)
-        //如果没有Bearer头说明还没有获取token,在当前过滤器中放行
+        //如果没有Bearer头说明还没有获取token,或者格式不对，直接返回null，交给后续的过滤器处理（比如匿名用户）
         if (header.isNullOrBlank() || !header.startsWith("Bearer ")) return null
         val token = header.substringAfter("Bearer ").trim()
         val jws = jwtTokenHelper.parseToken(token)
