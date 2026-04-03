@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.ProviderManager
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer.withDefaults
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
@@ -67,8 +68,17 @@ class SecurityConfigForBean {
 
     @Primary
     @Bean("authenticationManager")
-    fun authenticationManager(config: AuthenticationConfiguration): AuthenticationManager =
-        config.authenticationManager
+    ///SecurityFilterChain 里有内部自己的manager，如果在其chain上设置provider，那么我们的manager内部就没有对应的provider，就无法处理token了
+    fun authenticationManager(
+        config: AuthenticationConfiguration, daoAuthenticationProvider: DaoAuthenticationProvider,
+        jwtPreAuthenticatedAuthenticationProvider: PreAuthenticatedAuthenticationProvider
+    ): AuthenticationManager =
+        ProviderManager(
+            listOf(
+                daoAuthenticationProvider,
+                jwtPreAuthenticatedAuthenticationProvider
+            )
+        )
 
     @Suppress("removal")
     @Bean
@@ -90,11 +100,9 @@ class SecurityConfig(
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        objectMapper: ObjectMapper, jwtTokenHelper: JwtTokenHelper, authenticationManager: AuthenticationManager,
-        jwtPreAuthenticatedAuthenticationProvider: PreAuthenticatedAuthenticationProvider
+        objectMapper: ObjectMapper, jwtTokenHelper: JwtTokenHelper, authenticationManager: AuthenticationManager
     ): SecurityFilterChain {
         http
-            .authenticationProvider(jwtPreAuthenticatedAuthenticationProvider)
             //ddFilterAt(...)
             //把你的 jwtAuthenticationFilter 放到 AbstractPreAuthenticatedProcessingFilter
             // 这个位置上。意思是：用你自定义 JWT 逻辑替换/占据该过滤器槽位，在认证链中按这个阶段执行。
@@ -121,7 +129,7 @@ class SecurityConfig(
                 with(it) {
                     requestMatchers("/").permitAll()
                     requestMatchers("/actuator/*").permitAll()
-
+                    requestMatchers("/token").permitAll()
                     requestMatchers(HttpMethod.GET, "/menu", "/menu/**").apply {
                         hasAuthority(UserAuthorities.READ_MENU.name)
                         hasAnyRole("ANONYMOUS", "USER", "MANAGER", "TEA_MAKER")

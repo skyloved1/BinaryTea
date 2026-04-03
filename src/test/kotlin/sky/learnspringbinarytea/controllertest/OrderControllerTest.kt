@@ -12,7 +12,6 @@ import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.logout
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
 import org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated
 import org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
@@ -24,6 +23,7 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 import tools.jackson.databind.ObjectMapper
+import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -41,7 +41,7 @@ class OrderControllerTest {
     @BeforeEach
     fun contextLoads(wac: WebApplicationContext) {
         mockMvc = MockMvcBuilders.webAppContextSetup(wac).apply<DefaultMockMvcBuilder>(springSecurity()).build()
-        jdbcClient = JdbcClient.create(wac.getBean<javax.sql.DataSource>())
+        jdbcClient = JdbcClient.create(wac.getBean<DataSource>())
     }
 
 
@@ -120,13 +120,15 @@ class OrderControllerTest {
         }
     }
 
+    //Token测试
     @Test
-    fun testOrderPageWithAuthenticatedUser() {
-        mockMvc!!.perform(
-            get("/order").with(user("lilei").password("binarytea"))
-        ).andExpectAll(
-            status().is2xxSuccessful
-        )
+    fun testOrderPageWithTokenAuthentication() {
+        val token = context(mockMvc!!) {
+            getToken(
+                username = "lilei",
+                password = "binarytea"
+            ).getOrNull()
+        }
 
 //        println("mockMvc=" + System.identityHashCode(mockMvc))
 //        val auth = Base64.getEncoder().encodeToString("lilei:binarytea".toByteArray())
@@ -135,10 +137,55 @@ class OrderControllerTest {
 
         //手动 buildRequest(it)，会绕开/破坏 RequestPostProcessor 的正常链路。
         // 因此，使用 httpBasic() 时，不要手动 buildRequest，而是直接传递 httpBasic() 生成的 RequestPostProcessor。
-        mockMvc!!.perform(
-            get("/order")
-                .with(httpBasic("lilei", "binarytea"))
-        )
+        mockMvc!!
+            .perform(
+                get("/order")
+                    .header("Authorization", "Bearer $token")
+            )
+            .andExpectAll(
+                status().is2xxSuccessful
+            )
+
+    }
+
+    context(mockMvc: MockMvc)
+    private fun getToken(username: String, password: String): Result<String> {
+        runCatching {
+            mockMvc
+                .perform(
+                    post("/token").header("Authorization", "Bearer ").contentType("application/json").content(
+                        objectMapperProvider.getIfAvailable { ObjectMapper() }.writeValueAsString(
+                            mapOf(
+                                "username" to username,
+                                "password" to password
+                            )
+                        )
+                    )
+                )
+                .andExpect(status().isOk)
+                .andReturn().response.contentAsString.let { str ->
+                    objectMapperProvider.getIfAvailable { ObjectMapper() }.readTree(str)
+                }.get("token").asString().also {
+                    println("token: $it")
+                }
+        }.onSuccess {
+            return Result.success(it)
+        }.onFailure {
+            println("Failed to get token: ${it.message}")
+            return Result.failure(it)
+        }
+        return Result.failure(UnknownError("Failed to get token"))
+    }
+
+    //HttpBasic测试
+    @Test
+    fun testOrderPageWithHttpBasicAuthentication() {
+        mockMvc!!
+            .perform(
+                get("/order")
+                    .with(httpBasic("lilei", "binarytea"))
+                    .header("Accept", "text/html")
+            )
             .andExpectAll(
                 status().is2xxSuccessful
             )
