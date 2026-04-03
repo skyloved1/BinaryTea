@@ -103,6 +103,7 @@ class SecurityConfig(
         objectMapper: ObjectMapper, jwtTokenHelper: JwtTokenHelper, authenticationManager: AuthenticationManager
     ): SecurityFilterChain {
         http
+            .authenticationManager(authenticationManager)
             //ddFilterAt(...)
             //把你的 jwtAuthenticationFilter 放到 AbstractPreAuthenticatedProcessingFilter
             // 这个位置上。意思是：用你自定义 JWT 逻辑替换/占据该过滤器槽位，在认证链中按这个阶段执行。
